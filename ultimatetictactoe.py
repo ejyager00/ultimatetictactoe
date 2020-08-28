@@ -222,11 +222,11 @@ class UltimateTicTacToe:
             self.check_small_win(self.lastmove[0], self.lastmove[1]) #check winner
             turn = (turn+1)%2 #increment move
         print("Congratulations! " + self.grid.winner() + " has won!")
-        return (self.grid.copy(), self.grid.winner())
+        return (self.grid, self.grid.winner())
 
 if __name__=="__main__":
     player1 = humanplayer.Player(input("Player 1 name:   "))
     player2 = humanplayer.Player(input("Player 2 name:   "))
     game = UltimateTicTacToe(player1, player2)
     print(game.grid.to_string())
-    game.start()    
+    game.start()
