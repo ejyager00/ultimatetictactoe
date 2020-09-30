@@ -30,16 +30,15 @@ ORDER_FOR_TO_STRING = [0, 1, 2, 9, 10, 11, 18, 19, 20, 3, 4, 5, 12, 13, 14, 21,
 def possible_moves(gamestate):
     moves=[]
     lastmove=9
-    for i, b in enumerate(gamestate[PREV_MOV:PREV_MOV+9]):
+    for i, b in enumerate(gamestate[PREV_MOV:PREV_MOV+9]): #set lastmove to the location of the previous move
         if b:
             lastmove=i
-    if lastmove!=9:
+    if lastmove!=9: #if the last move
         for i, vic in enumerate(VICTORIES):
             if (gamestate[X_LOC+lastmove*9:X_LOC+lastmove*9+9]&vic==vic
                 or gamestate[O_LOC+lastmove*9:O_LOC+lastmove*9+9]&vic==vic):
                 lastmove=9
-    if lastmove!=9:
-        if (gamestate[X_LOC+lastmove*9:X_LOC+lastmove*9+9]&
+        if (gamestate[X_LOC+lastmove*9:X_LOC+lastmove*9+9]|
             gamestate[O_LOC+lastmove*9:O_LOC+lastmove*9+9]
             ==Bits(hex='0b111111111')):
             lastmove=9
@@ -65,25 +64,29 @@ def make_move(gamestate, move):
         gamestate[O_LOC:O_LOC+(move[0]-1)*9+move[1]-1].bin + '1' +
             gamestate[O_LOC+(move[0]-1)*9+move[1]:O_LOC+81].bin +
         '0'*(move[1]-1)+'1'+'0'*(9-move[1]) +
-        '0' +
+        '0')
+        new_bin=(new_bin+
         gamestate[X_VIC:X_VIC+9].bin +
         gamestate[O_VIC:O_VIC+move[0]-1].bin +
-            str(int([gamestate[O_LOC+(move[0]-1)*9+move[1]-1:O_LOC+(move[0]-1)*9+move[1]+8].__and__(vic).__eq__(vic) for vic in VICTORIES].count(1)!=0)) +
-            gamestate[O_VIC+move[0]:O_VIC+9].bin +
+            str(int(subgrid_winner(Bits(bin=new_bin), move[0], 'O'))) +
+            gamestate[O_VIC+move[0]:O_VIC+9].bin)
+        new_bin=(new_bin+
         str(int(gamestate[X_W])) +
-        str(int([gamestate[O_VIC:O_VIC+9].__and__(vic).__eq__(vic) for vic in VICTORIES].count(1)!=0)))
+        str(int(total_winner(Bits(bin=new_bin), 'O'))))
     else:
         new_bin=(new_bin+
         gamestate[X_LOC:X_LOC+(move[0]-1)*9+move[1]-1].bin + '1' +
             gamestate[X_LOC+(move[0]-1)*9+move[1]:X_LOC+81].bin +
         gamestate[O_LOC:O_LOC+81].bin +
         '0'*(move[1]-1)+'1'+'0'*(9-move[1]) +
-        '1' +
+        '1')
+        new_bin=(new_bin+
         gamestate[X_VIC:X_VIC+move[0]-1].bin +
-            str(int([gamestate[X_LOC+(move[0]-1)*9+move[1]-1:X_LOC+(move[0]-1)*9+move[1]+8].__and__(vic).__eq__(vic) for vic in VICTORIES].count(1)!=0)) +
+            str(int(subgrid_winner(Bits(bin=new_bin), move[0], 'X'))) +
             gamestate[X_VIC+move[0]:X_VIC+9].bin +
-        gamestate[O_VIC:O_VIC+9].bin +
-        str(int([gamestate[X_VIC:X_VIC+9].__and__(vic).__eq__(vic) for vic in VICTORIES].count(1)!=0)) +
+        gamestate[O_VIC:O_VIC+9].bin)
+        new_bin=(new_bin+
+        str(int(total_winner(Bits(bin=new_bin), 'X'))) +
         str(int(gamestate[O_W])))
     return Bits(bin=new_bin)
 
@@ -95,7 +98,6 @@ def gamestate_to_string(gamestate):
         elif gamestate[O_LOC+i]:
             chars[i]='O'
     string = ""
-    #DOES NOT WORK
     for i in range(9):
         for j in range(9):
             string += chars[ORDER_FOR_TO_STRING[i*9+j]]
@@ -126,3 +128,42 @@ def gamestate_to_string(gamestate):
                     else:
                         string += "The next move must be in grid number "+str(i+1)+"."
     return string
+
+def subgrid_winner(gamestate, num, letter):
+    subgrid=gamestate[X_LOC+(letter=="O")*81+(num-1)*9:X_LOC+(letter=="O")*81+num*9]
+    for win in VICTORIES:
+        if subgrid&win == win:
+            return True
+    return False
+
+def total_winner(gamestate, letter):
+    grid=gamestate[X_VIC+(letter=="O")*9:X_VIC+(letter=="O")*9+9]
+    for win in VICTORIES:
+        if grid&win == win:
+            return True
+    return False
+
+if __name__=="__main__":
+    game = Bits(192)
+    game = make_move(game, (5,5))
+    print(gamestate_to_string(game))
+    game = make_move(game, (5,1))
+    print(gamestate_to_string(game))
+    game = make_move(game, (1,3))
+    print(gamestate_to_string(game))
+    game = make_move(game, (3,2))
+    print(gamestate_to_string(game))
+    game = make_move(game, (2,5))
+    print(gamestate_to_string(game))
+    game = make_move(game, (5,2))
+    print(gamestate_to_string(game))
+    game = make_move(game, (2,2))
+    print(gamestate_to_string(game))
+    game = make_move(game, (2,4))
+    print(gamestate_to_string(game))
+    game = make_move(game, (4,5))
+    print(gamestate_to_string(game))
+    game = make_move(game, (5,3))
+    print(gamestate_to_string(game))
+    game = make_move(game, (3,5))
+    print(gamestate_to_string(game))
